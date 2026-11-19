@@ -1,6 +1,7 @@
-import 'dotenv/config'
+import './env.js'
 import express from 'express'
 import { pool } from './db.js'
+import { authRouter, autenticar } from './auth.js'
 import doadoresRouter from './routes/doadores.js'
 import itensRouter from './routes/itens.js'
 import doacoesRouter from './routes/doacoes.js'
@@ -19,6 +20,10 @@ app.get('/api/health', async (req, res) => {
     res.status(503).json({ status: 'erro', banco: 'indisponível', timestamp: new Date().toISOString() })
   }
 })
+
+// Rotas públicas acima; daqui para baixo tudo em /api exige token.
+app.use('/api/auth', authRouter)
+app.use('/api', autenticar)
 
 app.use('/api/doadores', doadoresRouter)
 app.use('/api/itens', itensRouter)
