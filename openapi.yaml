@@ -1,0 +1,325 @@
+openapi: 3.0.3
+info:
+  title: API SS - Stay Safe
+  version: 1.0.0
+  description: >
+    API da ONG SS - Stay Safe para controlar doações de equipamentos de
+    segurança. Todas as rotas, exceto /health e /auth/login, exigem o
+    cabeçalho Authorization: Bearer <token>.
+servers:
+  - url: http://localhost:3001/api
+    description: Ambiente local
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Sistema
+  - name: Autenticação
+  - name: Doadores
+  - name: Itens
+  - name: Doações
+
+paths:
+  /health:
+    get:
+      tags: [Sistema]
+      summary: Verifica a API e a conexão com o banco
+      security: []
+      responses:
+        '200':
+          description: API e banco funcionando
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: ok }
+                  banco: { type: string, example: ok }
+                  timestamp: { type: string, format: date-time }
+        '503':
+          description: Banco indisponível
+
+  /auth/login:
+    post:
+      tags: [Autenticação]
+      summary: Faz login e devolve o token JWT
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, senha]
+              properties:
+                email: { type: string, format: email, example: coordenacao@staysafe.local }
+                senha: { type: string, example: staysafe123 }
+      responses:
+        '200':
+          description: Login aceito
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token: { type: string }
+                  usuario:
+                    type: object
+                    properties:
+                      id_usuario: { type: integer }
+                      nome: { type: string }
+                      email: { type: string }
+        '400': { $ref: '#/components/responses/Invalido' }
+        '401':
+          description: E-mail ou senha incorretos
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Erro' }
+
+  /doadores:
+    get:
+      tags: [Doadores]
+      summary: Lista doadores (ativos primeiro)
+      parameters:
+        - name: busca
+          in: query
+          required: false
+          description: Parte do nome ou do e-mail
+          schema: { type: string }
+      responses:
+        '200':
+          description: Lista de doadores
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Doador' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+    post:
+      tags: [Doadores]
+      summary: Cadastra um doador
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DoadorEntrada' }
+      responses:
+        '201':
+          description: Doador criado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Doador' }
+        '400': { $ref: '#/components/responses/Invalido' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '409':
+          description: Já existe um doador com este e-mail
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Erro' }
+
+  /doadores/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer, minimum: 1 }
+    get:
+      tags: [Doadores]
+      summary: Busca um doador pelo ID
+      responses:
+        '200':
+          description: Doador encontrado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Doador' }
+        '400': { $ref: '#/components/responses/Invalido' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '404': { $ref: '#/components/responses/NaoEncontrado' }
+    put:
+      tags: [Doadores]
+      summary: Atualiza um doador (inclusive ativo/inativo)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DoadorEntrada' }
+      responses:
+        '200':
+          description: Doador atualizado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Doador' }
+        '400': { $ref: '#/components/responses/Invalido' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '404': { $ref: '#/components/responses/NaoEncontrado' }
+        '409':
+          description: Já existe um doador com este e-mail
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Erro' }
+    delete:
+      tags: [Doadores]
+      summary: Exclui um doador que ainda não fez doações
+      responses:
+        '204': { description: Doador excluído }
+        '400': { $ref: '#/components/responses/Invalido' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '404': { $ref: '#/components/responses/NaoEncontrado' }
+        '409':
+          description: O doador tem doações registradas; deve ser desativado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Erro' }
+
+  /itens:
+    get:
+      tags: [Itens]
+      summary: Catálogo de itens com o nome da categoria
+      responses:
+        '200':
+          description: Itens do catálogo
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Item' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+
+  /doacoes:
+    get:
+      tags: [Doações]
+      summary: Lista as doações, da mais recente para a mais antiga, com os itens
+      responses:
+        '200':
+          description: Doações com itens
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Doacao' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+    post:
+      tags: [Doações]
+      summary: Registra uma doação e seus itens numa única transação
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DoacaoEntrada' }
+      responses:
+        '201':
+          description: Doação registrada
+        '400':
+          description: Dados inválidos, ou doador/item inexistente (nada é gravado)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Erro' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    NaoAutenticado:
+      description: 'Token ausente, inválido ou expirado'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Erro' }
+          examples:
+            ausente: { value: { erro: Token ausente } }
+            invalido: { value: { erro: Token inválido ou expirado } }
+    Invalido:
+      description: Dados inválidos
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Erro' }
+    NaoEncontrado:
+      description: Registro não encontrado
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Erro' }
+
+  schemas:
+    Erro:
+      type: object
+      properties:
+        erro: { type: string }
+        erros:
+          type: array
+          items: { type: string }
+
+    DoadorEntrada:
+      type: object
+      required: [nome]
+      properties:
+        nome: { type: string, maxLength: 150, example: Ana Paula Ribeiro }
+        email: { type: string, format: email, maxLength: 100, nullable: true }
+        telefone: { type: string, maxLength: 20, nullable: true, example: (14) 99812-3301 }
+        ativo: { type: boolean, default: true }
+
+    Doador:
+      allOf:
+        - $ref: '#/components/schemas/DoadorEntrada'
+        - type: object
+          properties:
+            id_doador: { type: integer }
+            data_cadastro: { type: string, example: '2026-11-19 13:21:27' }
+
+    Item:
+      type: object
+      properties:
+        id_item: { type: integer }
+        nome: { type: string, example: Kit de primeiros socorros }
+        unidade: { type: string, example: kit }
+        id_categoria: { type: integer }
+        categoria: { type: string, example: Primeiros socorros }
+
+    DoacaoEntrada:
+      type: object
+      required: [id_doador, data_doacao, itens]
+      properties:
+        id_doador: { type: integer }
+        data_doacao: { type: string, format: date, example: '2026-11-19' }
+        status:
+          type: string
+          enum: [pendente, entregue, cancelada]
+          default: pendente
+        data_entrega: { type: string, format: date, nullable: true, description: Não pode ser anterior a data_doacao }
+        observacao: { type: string, maxLength: 255, nullable: true }
+        itens:
+          type: array
+          minItems: 1
+          description: Cada item só pode aparecer uma vez
+          items:
+            type: object
+            required: [id_item, quantidade]
+            properties:
+              id_item: { type: integer }
+              quantidade: { type: integer, minimum: 1 }
+              data_validade: { type: string, format: date, nullable: true }
+
+    Doacao:
+      type: object
+      properties:
+        id_doacao: { type: integer }
+        data_doacao: { type: string, format: date }
+        status: { type: string, enum: [pendente, entregue, cancelada] }
+        data_entrega: { type: string, format: date, nullable: true }
+        observacao: { type: string, nullable: true }
+        id_doador: { type: integer }
+        doador: { type: string }
+        itens:
+          type: array
+          items:
+            type: object
+            properties:
+              id_item: { type: integer }
+              item: { type: string }
+              unidade: { type: string }
+              quantidade: { type: integer }
+              data_validade: { type: string, format: date, nullable: true }

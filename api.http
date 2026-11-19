@@ -1,0 +1,139 @@
+# Testes da API SS - Stay Safe
+# Abra no VS Code com a extensão REST Client e clique em "Send Request".
+# Ordem sugerida: rode de cima para baixo. A API precisa estar rodando (npm run api).
+
+@base = http://localhost:3001/api
+
+### 1. Health (público): API e banco funcionando
+GET {{base}}/health
+
+### 2. Sem token -> 401 "Token ausente"
+GET {{base}}/doadores
+
+### 3. POST sem token -> 401 "Token ausente"
+POST {{base}}/doadores
+Content-Type: application/json
+
+{ "nome": "Sem token" }
+
+### 4. Token inválido -> 401 "Token inválido ou expirado"
+GET {{base}}/doadores
+Authorization: Bearer token.falso.123
+
+### 5. Login com senha errada -> 401
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{ "email": "coordenacao@staysafe.local", "senha": "senha-errada" }
+
+### 6. Login certo -> 200 com token (os pedidos abaixo usam este token)
+# @name login
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{ "email": "coordenacao@staysafe.local", "senha": "staysafe123" }
+
+###
+@token = {{login.response.body.token}}
+
+### 7. Listar doadores
+GET {{base}}/doadores
+Authorization: Bearer {{token}}
+
+### 8. Buscar doadores por nome ou e-mail
+GET {{base}}/doadores?busca=ana
+Authorization: Bearer {{token}}
+
+### 9. Um doador
+GET {{base}}/doadores/1
+Authorization: Bearer {{token}}
+
+### 10. Cadastrar doador -> 201
+# @name novoDoador
+POST {{base}}/doadores
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "nome": "Oficina Mecânica Exemplo", "email": "oficina@example.com", "telefone": "(14) 3433-0000" }
+
+### 11. Mesmo e-mail de novo -> 409
+POST {{base}}/doadores
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "nome": "Outro nome", "email": "oficina@example.com" }
+
+### 12. Dados inválidos -> 400 com a lista de erros
+POST {{base}}/doadores
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "nome": "", "email": "sem-arroba" }
+
+### 13. Editar (e desativar) o doador criado no passo 10
+PUT {{base}}/doadores/{{novoDoador.response.body.id_doador}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "nome": "Oficina Mecânica Exemplo", "email": "oficina@example.com", "telefone": "(14) 3433-0000", "ativo": false }
+
+### 14. Excluir doador que já tem doações -> 409
+DELETE {{base}}/doadores/1
+Authorization: Bearer {{token}}
+
+### 15. Excluir o doador criado no passo 10 -> 204
+DELETE {{base}}/doadores/{{novoDoador.response.body.id_doador}}
+Authorization: Bearer {{token}}
+
+### 16. Catálogo de itens com a categoria
+GET {{base}}/itens
+Authorization: Bearer {{token}}
+
+### 17. Listar doações com os itens de cada uma
+GET {{base}}/doacoes
+Authorization: Bearer {{token}}
+
+### 18. Registrar doação com dois itens -> 201
+POST {{base}}/doacoes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "id_doador": 1,
+  "data_doacao": "2026-11-19",
+  "status": "entregue",
+  "data_entrega": "2026-11-19",
+  "observacao": "Teste pelo api.http",
+  "itens": [
+    { "id_item": 6, "quantidade": 3, "data_validade": "2027-03-15" },
+    { "id_item": 1, "quantidade": 12 }
+  ]
+}
+
+### 19. Doação com item inexistente -> 400 e nada é gravado (rollback)
+POST {{base}}/doacoes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "id_doador": 1,
+  "data_doacao": "2026-11-19",
+  "itens": [
+    { "id_item": 1, "quantidade": 2 },
+    { "id_item": 999, "quantidade": 1 }
+  ]
+}
+
+### 20. Doação inválida -> 400 (quantidade zero e item repetido)
+POST {{base}}/doacoes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "id_doador": 1,
+  "data_doacao": "2026-11-19",
+  "itens": [
+    { "id_item": 1, "quantidade": 0 },
+    { "id_item": 1, "quantidade": 5 }
+  ]
+}
