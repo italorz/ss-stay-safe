@@ -343,6 +343,11 @@ button:focus-visible {
   font-size: 0.875rem;
   color: var(--texto-suave);
 }
+.link-health {
+  margin-top: 4px;
+  font-size: 0.875rem;
+  color: var(--primaria);
+}
 
 /* ---------- Tablet ---------- */
 @media (min-width: 720px) {

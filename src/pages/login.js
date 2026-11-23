@@ -43,7 +43,12 @@ export function telaLogin(aoEntrar, avisoInicial = '') {
   )
 
   queueMicrotask(() => email.focus())
-  return el('main', { class: 'tela-login' }, formulario, statusApi())
+  const linkHealth = el(
+    'a',
+    { class: 'link-health', href: '/api/health', target: '_blank', rel: 'noopener' },
+    'Abrir /api/health',
+  )
+  return el('main', { class: 'tela-login' }, formulario, statusApi(), linkHealth)
 }
 
 // GET /api/health é público: mostra se a API e o banco respondem, com data e hora.
