@@ -135,7 +135,6 @@ src/api.js                 fetch centralizado, com o token
 src/ui.js                  Funções de tela (createElement, datas)
 src/pages/                 login.js, doadores.js, doacoes.js
 src/style.css              CSS mobile-first (720px e 960px)
-docs/                      Documento de Visão, relatório final e entrega da AE2
 ```
 
 ## Backup do banco

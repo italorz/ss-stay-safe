@@ -43,5 +43,20 @@ export function telaLogin(aoEntrar, avisoInicial = '') {
   )
 
   queueMicrotask(() => email.focus())
-  return el('main', { class: 'tela-login' }, formulario)
+  return el('main', { class: 'tela-login' }, formulario, statusApi())
+}
+
+// GET /api/health é público: mostra se a API e o banco respondem, com data e hora.
+function statusApi() {
+  const linha = el('p', { class: 'status-api' }, 'Consultando a API...')
+  fetch('/api/health')
+    .then((res) => res.json())
+    .then((dados) => {
+      const dataHora = new Date(dados.timestamp).toLocaleString('pt-BR')
+      linha.textContent = `Status da API: ${dados.status} (${dataHora})`
+    })
+    .catch(() => {
+      linha.textContent = 'Status da API: indisponível'
+    })
+  return linha
 }
