@@ -145,6 +145,13 @@ No Prompt de Comando (cmd):
 C:\xampp\mysql\bin\mysqldump.exe -u root --default-character-set=utf8mb4 ss_stay_safe > backup-ss_stay_safe.sql
 ```
 
+
+
+Para restaurar:
+
+```bat
+C:\xampp\mysql\bin\mysql.exe -u root --default-character-set=utf8mb4 ss_stay_safe < backup-ss_stay_safe.sql
+```
 ## Funcionalidades implementadas
 
 - Autenticação de usuários com JWT.
@@ -173,9 +180,3 @@ C:\xampp\mysql\bin\mysqldump.exe -u root --default-character-set=utf8mb4 ss_stay
 - Cadastro de beneficiários.
 - Controle da distribuição de equipamentos.
 - Relatórios de impacto social da ONG.
-
-Para restaurar:
-
-```bat
-C:\xampp\mysql\bin\mysql.exe -u root --default-character-set=utf8mb4 ss_stay_safe < backup-ss_stay_safe.sql
-```
