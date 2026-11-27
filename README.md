@@ -145,6 +145,35 @@ No Prompt de Comando (cmd):
 C:\xampp\mysql\bin\mysqldump.exe -u root --default-character-set=utf8mb4 ss_stay_safe > backup-ss_stay_safe.sql
 ```
 
+## Funcionalidades implementadas
+
+- Autenticação de usuários com JWT.
+- Login e logout.
+- Cadastro, edição, exclusão e consulta de doadores.
+- Busca de doadores por nome ou e-mail.
+- Ativação e desativação de doadores.
+- Catálogo de equipamentos por categoria.
+- Registro de doações com múltiplos itens.
+- Registro da quantidade e validade dos equipamentos.
+- Consulta do histórico de doações.
+- Registro do status das doações.
+- Proteção das rotas da API.
+- Validação e integridade dos dados.
+- Interface responsiva.
+- Documentação da API com OpenAPI.
+- Roteiro de testes manuais da API.
+
+## Melhorias futuras
+
+- Edição de doações já registradas.
+- Atualização do status de doações existentes.
+- Alertas de vencimento de equipamentos.
+- Dashboard com indicadores de doações.
+- Controle de estoque de equipamentos.
+- Cadastro de beneficiários.
+- Controle da distribuição de equipamentos.
+- Relatórios de impacto social da ONG.
+
 Para restaurar:
 
 ```bat
